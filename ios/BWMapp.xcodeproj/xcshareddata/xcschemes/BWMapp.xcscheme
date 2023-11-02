@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-               BuildableName = "BWMapp.app"
-               BlueprintName = "BWMapp"
-               ReferencedContainer = "container:BWMapp.xcodeproj">
+               BuildableName = "BWMApp.app"
+               BlueprintName = "BWMApp"
+               ReferencedContainer = "container:BWMApp.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,9 +33,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "00E356ED1AD99517003FC87E"
-               BuildableName = "BWMappTests.xctest"
-               BlueprintName = "BWMappTests"
-               ReferencedContainer = "container:BWMapp.xcodeproj">
+               BuildableName = "BWMAppTests.xctest"
+               BlueprintName = "BWMAppTests"
+               ReferencedContainer = "container:BWMApp.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -55,9 +55,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "BWMapp.app"
-            BlueprintName = "BWMapp"
-            ReferencedContainer = "container:BWMapp.xcodeproj">
+            BuildableName = "BWMApp.app"
+            BlueprintName = "BWMApp"
+            ReferencedContainer = "container:BWMApp.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -72,9 +72,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "BWMapp.app"
-            BlueprintName = "BWMapp"
-            ReferencedContainer = "container:BWMapp.xcodeproj">
+            BuildableName = "BWMApp.app"
+            BlueprintName = "BWMApp"
+            ReferencedContainer = "container:BWMApp.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

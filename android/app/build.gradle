@@ -73,9 +73,9 @@ android {
 
     compileSdkVersion rootProject.ext.compileSdkVersion
 
-    namespace "com.bwmapp"
+    namespace "gov.bdg.bwm"
     defaultConfig {
-        applicationId "com.bwmapp"
+        applicationId "gov.bdg.bwm"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

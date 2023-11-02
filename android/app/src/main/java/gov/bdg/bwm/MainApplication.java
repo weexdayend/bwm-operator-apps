@@ -1,4 +1,4 @@
-package com.bwmapp;
+package gov.bdg.bwm;
 
 import android.app.Application;
 import com.facebook.react.PackageList;
