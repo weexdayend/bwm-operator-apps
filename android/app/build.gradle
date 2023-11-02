@@ -1,5 +1,7 @@
 apply plugin: "com.android.application"
 apply plugin: "com.facebook.react"
+apply plugin: "kotlin-android"
+apply plugin: "kotlin-android-extensions"
 
 /**
  * This is the configuration block to customize your React Native Android app.
@@ -71,15 +73,15 @@ def jscFlavor = 'org.webkit:android-jsc:+'
 android {
     ndkVersion rootProject.ext.ndkVersion
 
-    compileSdkVersion rootProject.ext.compileSdkVersion
+    compileSdkVersion 33
 
     namespace "gov.bdg.bwm"
     defaultConfig {
         applicationId "gov.bdg.bwm"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode 4510
+        versionName "4.5.10"
     }
     signingConfigs {
         debug {
@@ -106,6 +108,12 @@ android {
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
+    implementation("com.google.android.play:app-update:2.1.0")
+    implementation("com.google.android.play:app-update-ktx:2.1.0")
+    implementation "androidx.fragment:fragment-ktx:1.6.1"  // Use a compatible version
+    implementation "androidx.appcompat:appcompat:1.6.1"  // Use a compatible version
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.8.20"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.10"  // Ensure both dependencies use the same version
 
     debugImplementation("com.facebook.flipper:flipper:${FLIPPER_VERSION}")
     debugImplementation("com.facebook.flipper:flipper-network-plugin:${FLIPPER_VERSION}") {

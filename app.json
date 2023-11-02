@@ -1,4 +1,5 @@
 {
   "name": "BWM App",
-  "displayName": "BWM App"
+  "displayName": "BWM App",
+  "plugins": ["react-native-compressor"]
 }
