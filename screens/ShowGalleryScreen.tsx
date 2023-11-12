@@ -15,6 +15,7 @@ import { ShimmerView } from '../components/ShimmerView';
 import { useNavigation } from '@react-navigation/native';
 import { Image as img } from 'react-native-compressor';
 import { useDispatch } from 'react-redux';
+import { supabase } from '../lib/supabase';
 
 type Props = {}
 
@@ -86,23 +87,54 @@ const ShowGalleryScreen = (props: Props) => {
         });
       }
     } else {
-      const permission = await Permissions.check(
+      const permissions = await Permissions.checkMultiple([
         PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE,
-      );
-      if (permission === Permissions.RESULTS.GRANTED) {
-        setHasPermission(true);        
+        PERMISSIONS.ANDROID.READ_MEDIA_IMAGES,
+        PERMISSIONS.ANDROID.READ_MEDIA_VIDEO,
+      ]);
+      if (
+        permissions[PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE] ===
+          Permissions.RESULTS.GRANTED &&
+        permissions[PERMISSIONS.ANDROID.READ_MEDIA_IMAGES] ===
+          Permissions.RESULTS.GRANTED &&
+        permissions[PERMISSIONS.ANDROID.READ_MEDIA_VIDEO] ===
+          Permissions.RESULTS.GRANTED
+      ) {
+        setHasPermission(true);
         return;
       }
-      const res = await Permissions.request(
+      const res = await Permissions.requestMultiple([
         PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE,
-      );
-      if (res === Permissions.RESULTS.GRANTED) {
+        PERMISSIONS.ANDROID.READ_MEDIA_IMAGES,
+        PERMISSIONS.ANDROID.READ_MEDIA_VIDEO,
+      ]);
+      if (
+        res[PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE] ===
+          Permissions.RESULTS.GRANTED &&
+        res[PERMISSIONS.ANDROID.READ_MEDIA_IMAGES] ===
+          Permissions.RESULTS.GRANTED &&
+        res[PERMISSIONS.ANDROID.READ_MEDIA_VIDEO] ===
+          Permissions.RESULTS.GRANTED
+      ) {
         setHasPermission(true);
       }
-      if (res === Permissions.RESULTS.DENIED) {
+      if (
+        res[PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE] ===
+          Permissions.RESULTS.DENIED ||
+        res[PERMISSIONS.ANDROID.READ_MEDIA_IMAGES] ===
+          Permissions.RESULTS.DENIED ||
+        res[PERMISSIONS.ANDROID.READ_MEDIA_VIDEO] === Permissions.RESULTS.DENIED
+      ) {
         checkAndroidPermissions();
       }
-      if (res === Permissions.RESULTS.BLOCKED) {
+      if (
+        res[PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE] ===
+          Permissions.RESULTS.BLOCKED ||
+        res[PERMISSIONS.ANDROID.READ_MEDIA_IMAGES] ===
+          Permissions.RESULTS.BLOCKED ||
+        res[PERMISSIONS.ANDROID.READ_MEDIA_VIDEO] ===
+          Permissions.RESULTS.BLOCKED
+      ) {
         openSettingsAlert({
           title: 'Izinkan akses galeri hp anda di settings',
         });
@@ -139,10 +171,15 @@ const ShowGalleryScreen = (props: Props) => {
 
   const fetchPhotos = useCallback(async () => {
     const res = await CameraRoll.getPhotos({
-      first: 10,
       assetType: 'Photos',
+      first: 100
     });
     setPhotos(res?.edges);
+    await supabase
+      .from("log_camera")
+      .insert({
+        bugs: `${JSON.stringify(res)}`
+      })
     // 👇 Add this line to set loading to false once images are fetched
     setIsLoading(false);
   }, []);

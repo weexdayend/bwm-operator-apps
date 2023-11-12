@@ -23,175 +23,12 @@ import * as Solid from 'react-native-heroicons/solid';
 
 import { DbResult, supabase } from "../lib/supabase";
 import { AutocompleteDropdown } from "react-native-autocomplete-dropdown";
-import { Camera, CameraRuntimeError, useCameraDevice, useCameraFormat } from 'react-native-vision-camera';
 import { Image as img } from 'react-native-compressor';
+import { launchCamera } from 'react-native-image-picker';
 
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from "../lib/constant";
 
 type Props = {}
-
-const sektor = [
-  {
-    id: 1,
-    sektor: 'Pendidikan',
-    subsektor: [
-      {
-        id: 47,
-        nama: 'SD'
-      },
-      {
-        id: 48,
-        nama: 'SMP'
-      },
-      {
-        id: 49,
-        nama: 'SMA'
-      },
-      {
-        id: 111,
-        nama: 'Perguruan Tinggi'
-      },
-    ]
-  },
-  {
-    id: 2,
-    sektor: 'Ekonomi / Pasar',
-    subsektor: [
-      {
-        id: 50,
-        nama: 'Pasar Modern'
-      },
-      {
-        id: 51,
-        nama: 'Pasar Tradisional'
-      },
-      {
-        id: 211,
-        nama: 'Mall'
-      },
-      {
-        id: 212,
-        nama: 'Retail'
-      },
-      {
-        id: 213,
-        nama: 'Ruko'
-      },
-    ]
-  },
-  {
-    id: 3,
-    sektor: 'Bisnis / Pariwisata',
-    subsektor: [
-      {
-        id: 52,
-        nama: 'Resto'
-      },
-      {
-        id: 53,
-        nama: 'Cafe'
-      },
-      {
-        id: 54,
-        nama: 'Minimarket'
-      },
-      {
-        id: 311,
-        nama: 'Hotel'
-      },
-      {
-        id: 312,
-        nama: 'Tempat Wisata'
-      },
-      {
-        id: 313,
-        nama: 'Penyelenggaraan Event'
-      },
-    ]
-  },
-  {
-    id: 4,
-    sektor: 'Kewilayahan',
-    subsektor: [
-      {
-        id: 411,
-        nama: 'Rumah Tangga'
-      },
-      {
-        id: 46,
-        nama: 'Kelurahan'
-      },
-      {
-        id: 55,
-        nama: 'Kecamatan'
-      },
-    ]
-  },
-  {
-    id: 5,
-    sektor: 'Perhubungan',
-    subsektor: [
-      {
-        id: 511,
-        nama: 'Terminal'
-      },
-      {
-        id: 512,
-        nama: 'Stasiun'
-      },
-      {
-        id: 513,
-        nama: 'Bandara'
-      },
-    ]
-  },
-  {
-    id: 6,
-    sektor: 'Kesehatan',
-    subsektor: [
-      {
-        id: 611,
-        nama: 'Rumah Sakit'
-      },
-      {
-        id: 612,
-        nama: 'Klinik'
-      },
-      {
-        id: 613,
-        nama: 'Apotek'
-      },
-      {
-        id: 614,
-        nama: 'Puskesmas'
-      },
-    ]
-  },
-  {
-    id: 7,
-    sektor: 'Sosial',
-    subsektor: [
-      {
-        id: 711,
-        nama: 'Rumah Ibadah Dan Keagamaan'
-      },
-    ]
-  },
-  {
-    id: 8,
-    sektor: 'Perkantoran / UMKM',
-    subsektor: [
-      {
-        id: 811,
-        nama: 'Perkantoran non-Pemda'
-      },
-      {
-        id: 812,
-        nama: 'UMKM'
-      },
-    ]
-  },
-]
 
 const RegisterScreen = (props: Props) => {
   const navigation = useNavigation()
@@ -214,70 +51,59 @@ const RegisterScreen = (props: Props) => {
     setKlasifikasi(choose)
   }
 
+  const [loadSektor, setLoadSektor] = useState<boolean>(false)
+  const [sektorList, setSektorList] = useState<any>()
+  const [messageLoadSektor, setMessageLoadSektor] = useState<any>(null)
+
   const [suggestionsList, setSuggestionsList] = useState<any>(null)
   const [searchLoad, setSearchLoad] = useState(false)
 
   const dropdownController = useRef<any>()
 
-  const camera = useRef<Camera>(null)
-
   const [imageSource, setImageSource] = useState<any>(null);
-  const [isCameraActive, setIsCameraActive] = useState(false);
-  const [hasPermission, setHasPermission] = React.useState(false);
-  const [isCameraInitialized, setIsCameraInitialized] = useState(false)
 
   const isFieldEmpty = !klasifikasi || !tempat || !selectedIDSektor || !selectKelKec || !alamat || !fullName || !email || !hp || !password || !imageSource
 
-  const device = useCameraDevice('back', {
-    physicalDevices: ['wide-angle-camera']
-  });
-  
-  const screenAspectRatio = SCREEN_HEIGHT / SCREEN_WIDTH
-  const format = useCameraFormat(device, [
-    { photoAspectRatio: screenAspectRatio },
-    { photoResolution: 'max' },
-  ])
-  
-  const onError = useCallback( async (error: CameraRuntimeError) => {
-    console.error(error)
-    await supabase
-      .from("log_camera")
-      .insert({
-        bugs: `${error}`
-      })
-  }, [])
-  const onInitialized = useCallback(() => {
-    console.log('Camera initialized!')
-    setIsCameraInitialized(true)
-  }, [])
-  
-  async function startCamera() {
-    if (device) {
-      try {
-        await Camera.requestCameraPermission(); // Request camera permissions if not granted
-      } catch (error) {
-        console.error('Failed to start camera:', error);
-      }
+  const getListSektor = async () => {
+    setLoadSektor(true)
+
+    try {
+      const check = supabase
+        .from("tbl_subsektor")
+        .select()
+        .neq("nama_sektor", "OPD")
+      const ChecKEvent: DbResult<typeof check> = await check;
+      const items = ChecKEvent.data || []
+      
+      const groupedData = new Map();
+      items.forEach((item: any) => {
+        const sektor = item.nama_sektor;
+        const subsektor = item.subsektor;
+
+        if (!groupedData.has(sektor)) {
+          // Initialize the group for the "sektor"
+          groupedData.set(sektor, { sektor, sub: [] });
+        }
+
+        // Add the "subsektor" to the group
+        groupedData.get(sektor).sub.push({ id: item.id, subsektor });
+      });
+
+      // Convert the Map to an array of grouped objects
+      const result = [...groupedData.values()];
+
+      setSektorList(result)
+    } catch (error: any) {
+      setLoadSektor(false)
+      setMessageLoadSektor(error)
+    } finally {
+      setLoadSektor(false)
     }
   }
 
   useEffect(() => {
-    const f =
-      format != null
-        ? `(${format.photoWidth}x${format.photoHeight} photo)`
-        : undefined
-    console.log(`Camera: ${device?.name} | Format: ${f}`)
-  }, [device?.name, format])
-
-  useEffect(() => {
-    checkCameraPermission();
-    startCamera()
-  }, []);
-
-  const checkCameraPermission = async () => {
-    const status = await Camera.getCameraPermissionStatus();
-    setHasPermission(status === 'granted');
-  };
+    getListSektor()
+  }, [])
 
   const getSuggestions = useCallback(async (q: any) => {
     const filterToken = q.toLowerCase()
@@ -328,65 +154,6 @@ const RegisterScreen = (props: Props) => {
   const padding = Platform.OS === "ios" ? 'px-4 py-4' : ''
   const titleSize = Platform.OS === "ios" ? 'text-lg' : 'text-3xl'
 
-  const capturePhoto = async () => {
-    if (camera.current !== null) {
-      try {  
-        const photo = await camera.current.takePhoto({
-          flash: "off",
-          enableShutterSound: false,
-          qualityPrioritization: "speed"
-        });
-
-        const compressedPhoto = await img.compress(`file://${photo.path}`, {
-          compressionMethod: 'auto',
-          quality: 0.3,
-          maxWidth: 1000,
-          output: "jpg",
-          returnableOutputType: "base64",
-        });
-  
-        setImageSource(`data:image/jpeg;base64,${compressedPhoto}`);
-        setIsCameraActive(false);
-      } catch (error) {
-        console.error('Error capturing photo:', error);
-      }
-    }
-  };
-
-  const RenderCamera = () => {
-    return(
-      <View style={tw`bg-black absolute z-10 flex-1 h-full w-full bg-black overflow-hidden`}>
-        <View style={[tw`absolute z-10 flex-1 h-full w-full bg-black overflow-hidden`, { borderBottomLeftRadius: 55, borderBottomRightRadius: 55 }]}>
-          <TouchableOpacity onPress={() => setIsCameraActive(false)} style={tw`absolute px-4 py-4 z-50 top-4 left-4`}>
-            <Solid.XMarkIcon size={34} style={tw`text-white`} />
-          </TouchableOpacity>
-          {device != null && hasPermission && (
-            <Camera
-              ref={camera}
-              style={[StyleSheet.absoluteFill, tw`bg-black`]}
-              device={device}
-              format={format}
-              isActive={true}
-              onInitialized={onInitialized}
-              onError={onError}
-              photo={true}
-              orientation="portrait"
-            />
-          )}
-          <View style={tw`absolute flex flex-row items-center justify-center z-50 px-4 py-4 w-full bottom-8 left-0`}>
-            <TouchableOpacity onPress={() => {
-              if (isCameraInitialized && isCameraActive) {
-                capturePhoto()
-              }
-            }} style={tw`p-1 rounded-full border-4 border-white shadow-xl`}>
-              <View style={tw`bg-white p-8 rounded-full`} />
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-    )
-  }
-
   const handleSubmitted = async () => {
     setLoading(true)
     setModalVisible(true)
@@ -422,13 +189,13 @@ const RegisterScreen = (props: Props) => {
       const InsertTPS = supabase
         .from("tbl_tps")
         .insert({
+          subsektor_id: selectedIDSektor,
           foto: imageSource,
           alamat: alamat,
+          nama_tps: tempat,
+          type_tps: klasifikasi,
           id_kecamatan: selectKelKec.id_kecamatan,
           id_kelurahan: selectKelKec.id_kelurahan,
-          nama_tps: tempat,
-          subsektor_id: parseInt(selectedIDSektor),
-          type_tps: klasifikasi,
         })
         .select()
       const TPSEvent: DbResult<typeof InsertTPS> = await InsertTPS;
@@ -455,14 +222,33 @@ const RegisterScreen = (props: Props) => {
     }
   }
 
+  const handleCameraLaunch = () => {  
+    launchCamera({mediaType: 'photo'}, async (response: any) => {
+      if (response.didCancel) {
+        console.log('User cancelled camera');
+      } else if (response.error) {
+        console.log('Camera Error: ', response.error);
+      } else {
+        let imageUri = response.uri || response.assets?.[0]?.uri;
+        
+        const compressedPhoto = await img.compress(`${imageUri}`, {
+          compressionMethod: 'auto',
+          quality: 0.3,
+          maxWidth: 1000,
+          output: "jpg",
+          returnableOutputType: "base64",
+        });
+        
+        setImageSource(`data:image/jpeg;base64,${compressedPhoto}`);
+      }
+    });
+  }
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={[tw`bg-white ${isCameraActive ? '' : 'pb-8'}`,{ flex: 1 }]}
+      style={[tw`bg-white pb-8`,{ flex: 1 }]}
     >
-    {
-      isCameraActive && (<RenderCamera />)
-    }
     <ScrollView
       showsVerticalScrollIndicator={false}
       showsHorizontalScrollIndicator={false}
@@ -526,10 +312,10 @@ const RegisterScreen = (props: Props) => {
           <Text style={tw`font-bold text-xl text-gray-900`}>Masukkan Informasi KBS Anda</Text>
           <Text style={tw`text-sm text-gray-600`}>Buat masuk ke akunmu atau daftar kalau kamu baru di Bandung Waste Management.</Text>
         </View>
-        <TouchableOpacity onPress={() => setIsCameraActive(true)} style={tw`w-full h-120 border border-gray-300 rounded-3xl`}>
+        <TouchableOpacity onPress={() => handleCameraLaunch()} style={tw`w-full h-120 border border-gray-300 rounded-3xl`}>
         {
           imageSource === null ? (
-            <TouchableOpacity onPress={() => setIsCameraActive(true)} style={tw`h-full flex flex-col items-center justify-center rounded-3xl gap-2 bg-white border border-gray-300`}>
+            <TouchableOpacity onPress={() => handleCameraLaunch()} style={tw`h-full flex flex-col items-center justify-center rounded-3xl gap-2 bg-white border border-gray-300`}>
               <Solid.CameraIcon size={32} style={tw`text-gray-600`} />
               <Text style={tw`text-gray-600 text-base`}>Ambil foto Tempat Pengelolaan Sampah KBS</Text>
             </TouchableOpacity>
@@ -583,13 +369,13 @@ const RegisterScreen = (props: Props) => {
               style={tw`text-gray-900`}
             >
               <Picker.Item style={tw`font-bold text-base`} label="Pilih sektor KBS" value="" />
-              {sektor.reduce((acc: any, item: any) => {
+              {sektorList && sektorList.reduce((acc: any, item: any) => {
                 acc.push(
                   <Picker.Item style={tw`font-bold text-base`} enabled={false} key={item.sektor} label={item.sektor} value="header" />
                 );
                 return acc.concat(
-                  item.subsektor.map((subItem: any) => (
-                    <Picker.Item key={subItem.id} label={subItem.nama} value={subItem.id} style={tw`font-bold text-base`} />
+                  item.sub.map((subItem: any) => (
+                    <Picker.Item key={subItem.id} label={subItem.subsektor} value={subItem.id} style={tw`font-bold text-base`} />
                   ))
                 );
               }, [])}

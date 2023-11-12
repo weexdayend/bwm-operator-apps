@@ -80,8 +80,8 @@ android {
         applicationId "gov.bdg.bwm"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 4510
-        versionName "4.5.10"
+        versionCode 4880
+        versionName "4.8.80"
     }
     signingConfigs {
         debug {

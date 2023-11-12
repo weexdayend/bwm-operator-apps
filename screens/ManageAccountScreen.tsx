@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Dimensions,
+  DevSettings,
 } from 'react-native'
 
 import BottomSheet, { 
@@ -52,10 +53,17 @@ const ManageAccountScreen = (props: Props) => {
   );
 
   const handleLogout = async () => {
-    AsyncStorage.removeItem('TPS')
-    AsyncStorage.removeItem('OperatorID')
-    navigation.navigate('Welcome')
-  }
+    try {
+      // Remove multiple items from AsyncStorage
+      await AsyncStorage.multiRemove(['TPS', 'OperatorID']);
+
+      navigation.navigate('Welcome')
+      DevSettings.reload()
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
+  };
+  
 
   return (
     <SafeAreaView

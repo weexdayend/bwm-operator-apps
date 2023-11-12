@@ -16,6 +16,7 @@ import {
   Linking, 
 } from 'react-native';
 
+import { useDispatch } from "react-redux";
 import { useNavigation } from '@react-navigation/native';
 import { DbResult, supabase } from "../lib/supabase";
 
@@ -29,9 +30,9 @@ import moment from 'moment-timezone';
 import 'moment/locale/id';
 
 import * as Solid from 'react-native-heroicons/solid'
+
 import Skeleton from "../components/Skeleton"
 import LinearGradient from "react-native-linear-gradient";
-import { useDispatch } from "react-redux";
 import VersionCheck from "react-native-version-check";
 
 type Props = {}
@@ -40,7 +41,7 @@ async function retrieveNumber(key: string) {
   try {
     const value = await AsyncStorage.getItem(key)
     if (value !== null) {
-      return parseInt(value, 10)
+      return value
     }
     return null
   } catch (error) {
@@ -174,25 +175,11 @@ const HomeScreen = (props: Props) => {
   const currentLocalizedDate = moment()
   const formattedDate = currentLocalizedDate.format('LL')
 
-  const handleBackButton = () => {
-    // Prevent the default back button behavior (e.g., navigating back)
-    return true; // Return true to indicate that you've handled the back button
-  };
-
-  useEffect(() => {
-    // Add an event listener for the back button press
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', handleBackButton);
-  
-    // Clean up the event listener when the component unmounts
-    return () => {
-      backHandler.remove();
-    };
-  }, []);
-
   const [kelolaSampah, setKelolaSampah] = useState<any>([])
   const [olahSampah, setOlahSampah] = useState<any>([])
   const [transferedSampah, setTransferedSampah] = useState<any>([])
   const [profileData, setProfileData] = useState<any>([])
+  const [TPSData, setTPSData] = useState<any>([])
 
   const [loadSkeleton, setLoadSkeleton] = useState<boolean>(false)
 
@@ -200,7 +187,7 @@ const HomeScreen = (props: Props) => {
     const check = supabase
       .from("tbl_kelola")
       .select()
-      .eq("tpsId", `${TPS}`)
+      .eq("tpsId", TPS)
       .eq("status", 'Approved')
     const response = await check;
     
@@ -211,7 +198,7 @@ const HomeScreen = (props: Props) => {
     const check = supabase
       .from("tbl_kelola")
       .select()
-      .eq("tpsId", `${TPS}`)
+      .eq("tpsId", TPS)
       .eq("status", 'Transfered')
     const response = await check;
     
@@ -222,7 +209,7 @@ const HomeScreen = (props: Props) => {
     const check = supabase
       .from("tbl_olah")
       .select()
-      .eq("tpsId", `${TPS}`)
+      .eq("tpsId", TPS)
     const response = await check;
     
     return response.data
@@ -232,9 +219,19 @@ const HomeScreen = (props: Props) => {
     const check = supabase
       .from("tbl_operator")
       .select()
-      .eq("id", `${OperatorID}`)
+      .eq("id", OperatorID)
     const response = await check;
     
+    return response.data
+  }
+
+  const getTPSData = async (TPS: any, OperatorID: any) => {
+    const check = supabase
+      .from("tbl_tps")
+      .select()
+      .eq("id", TPS)
+    const response = await check
+
     return response.data
   }
 
@@ -242,7 +239,7 @@ const HomeScreen = (props: Props) => {
     const check = supabase
       .from(`tbl_olah`)
       .select(`id, created_at, tpsId, tbl_tps(nama_tps), total, jenis, klasifikasi, keterangan, evidence, source, destination, status_transfer`)
-      .eq("destination", `${TPS}`).eq("status_transfer", 'Pending')
+      .eq("destination", TPS).eq("status_transfer", 'Pending')
       .order("created_at", { ascending: false })
     const response = await check
 
@@ -253,19 +250,24 @@ const HomeScreen = (props: Props) => {
   const dispatch = useDispatch()
 
   const prom = async () => {
-    const TPS = await retrieveNumber('TPS');
-    const OperatorID = await retrieveNumber('OperatorID')
+    const retreiveTPS = await retrieveNumber('TPS');
+    const retreiveOperatorID = await retrieveNumber('OperatorID')
+
+    const TPS = retreiveTPS ? JSON.parse(retreiveTPS) : null;
+    const OperatorID = retreiveOperatorID ? JSON.parse(retreiveOperatorID) : null;
 
     setLoadSkeleton(true)
     Promise.all([
-      getProfile(TPS, OperatorID), 
+      getProfile(TPS, OperatorID),
+      getTPSData(TPS, OperatorID),
       getTotalSampah(TPS, OperatorID), 
       getOlahSampah(TPS, OperatorID), 
       getTransferedSampah(TPS, OperatorID), 
       getRequestData(TPS, OperatorID)
     ])
-      .then(([profileData, totalSampah, olahSampah, transferedSampah, requestData]) => {
+      .then(([profileData, TPSData, totalSampah, olahSampah, transferedSampah, requestData]) => {
         setProfileData(profileData)
+        setTPSData(TPSData)
         setKelolaSampah(totalSampah)
         setOlahSampah(olahSampah)
         setTransferedSampah(transferedSampah)
@@ -355,7 +357,7 @@ const HomeScreen = (props: Props) => {
   const totalSampah = kelolaSampah && kelolaSampah.reduce((total: any, item: any) => total + parseFloat(item.volume), 0)
   const transferSampah = transferedSampah && transferedSampah.reduce((total: any, item: any) => total + parseFloat(item.volume), 0)
 
-  const fixedTotal = (totalSampah).toFixed(1) - (transferSampah).toFixed(1)
+  const fixedTotal = totalSampah !== null && transferSampah !== null ? (totalSampah).toFixed(1) - (transferSampah).toFixed(1) : 0
 
   const olahanSampah = olahSampah && olahSampah.reduce((total: number, item: any) => {
     if (item.klasifikasi != "Kirim ke TPS") {
@@ -403,18 +405,45 @@ const HomeScreen = (props: Props) => {
   const checkUpdateNeeded = async () => {
     let updateNeeded = await VersionCheck.needUpdate();
     if (updateNeeded && updateNeeded.isNeeded) {
-        Alert.alert('Ada update', 'Ada aplikasi versi terbaru update dulu yuk!',
-        [
-          {
-            text: 'Update',
-            onPress: () => {
-              BackHandler.exitApp();
-              Linking.openURL(updateNeeded.storeUrl)
-            }
+      Alert.alert('Ada update', 'Ada aplikasi versi terbaru update dulu yuk!',
+      [
+        {
+          text: 'Update',
+          onPress: () => {
+            BackHandler.exitApp();
+            Linking.openURL(updateNeeded.storeUrl)
           }
-        ],
-        {cancelable: false}
-        )
+        }
+      ],
+      {cancelable: false}
+      )
+    }
+  }
+
+  const checkSektor = async () => {
+    if (TPSData) {
+      TPSData.map((item: any) => {
+        console.log(item.subsektor_id)
+        if (item.subsektor_id == null) {
+          Alert.alert('Sebelum mulai', 'Kamu perlu update data profile kamu dulu ya!',
+          [
+            {
+              text: 'Perbaharui Data',
+              onPress: () => {
+                navigation.navigate('UpdateCollection', {
+                  id: item.id,
+                  subsektor_id: item.subsektor_id,
+                  name: item.nama_tps,
+                  alamat: item.alamat,
+                  photo: item.foto
+                })
+              }
+            }
+          ],
+          {cancelable: false}
+          )
+        }
+      })
     }
   }
 
@@ -422,6 +451,10 @@ const HomeScreen = (props: Props) => {
     checkUpdateNeeded();
   }, []);
 
+  useEffect(() => {
+    checkSektor();
+  }, [TPSData])
+  
   return (
     <SafeAreaView
       style={tw`flex-1`}

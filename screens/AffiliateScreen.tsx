@@ -15,7 +15,6 @@ import {
 import { useNavigation } from "@react-navigation/native";
 
 import tw from 'twrnc';
-import * as Solid from 'react-native-heroicons/solid';
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -29,7 +28,7 @@ async function retrieveNumber(key: string) {
     const value = await AsyncStorage.getItem(key);
     if (value !== null) {
       // Convert the retrieved string back to a number
-      return parseInt(value, 10);
+      return value
     }
     return null; // Return null if the key doesn't exist in AsyncStorage
   } catch (error) {

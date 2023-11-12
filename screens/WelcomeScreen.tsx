@@ -14,8 +14,6 @@ import {
   Alert,
 } from 'react-native'
 
-import { Camera } from 'react-native-vision-camera'
-
 import VersionCheck from 'react-native-version-check'
 
 import tw from 'twrnc'
@@ -24,47 +22,6 @@ type Props = {}
 
 const WelcomeScreen = (props: Props) => {
   const navigation = useNavigation()
-
-  const checkCameraPermission = async () => {
-    let status = await Camera.getCameraPermissionStatus();
-    if (status !== 'granted') {
-      await Camera.requestCameraPermission();
-      status = await Camera.getCameraPermissionStatus();
-      if (status === 'denied') {
-        Alert.alert(
-          'Waduhh',
-          'Akses kamera harus di izinkan terlebih dahulu',
-          [
-            {
-              text: 'Open Settings',
-              onPress: () => {
-                Linking.openSettings(); // This will open your app's settings
-              },
-            },
-          ]
-        );
-      }
-    }
-  };
-  
-  useEffect(() => {
-    checkCameraPermission();
-  }, []);
-
-  const handleBackButton = () => {
-    // Prevent the default back button behavior (e.g., navigating back)
-    return true; // Return true to indicate that you've handled the back button
-  };
-
-  useEffect(() => {
-    // Add an event listener for the back button press
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', handleBackButton);
-  
-    // Clean up the event listener when the component unmounts
-    return () => {
-      backHandler.remove();
-    };
-  }, []);
 
   const checkUpdateNeeded = async () => {
     let updateNeeded = await VersionCheck.needUpdate();

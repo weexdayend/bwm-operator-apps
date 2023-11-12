@@ -43,7 +43,7 @@ async function retrieveNumber(key: string) {
     const value = await AsyncStorage.getItem(key);
     if (value !== null) {
       // Convert the retrieved string back to a number
-      return parseInt(value, 10);
+      return value
     }
     return null; // Return null if the key doesn't exist in AsyncStorage
   } catch (error) {
@@ -68,7 +68,11 @@ const RequestScreen = (props: Props) => {
 
   const getOlahSampah = async () => {
     setIsLoading(true);
-    const TPS = await retrieveNumber('TPS');
+    const retreiveTPS = await retrieveNumber('TPS');
+    const retreiveOperatorID = await retrieveNumber('OperatorID')
+
+    const TPS = retreiveTPS ? JSON.parse(retreiveTPS) : null;
+    const OperatorID = retreiveOperatorID ? JSON.parse(retreiveOperatorID) : null;
     
     const check = supabase
       .from(`tbl_olah`)
@@ -128,8 +132,11 @@ const RequestScreen = (props: Props) => {
     setLoading(true)
 
     try {
-      const OperatorID = await retrieveNumber('OperatorID');
-      const TPS = await retrieveNumber('TPS');
+      const retreiveTPS = await retrieveNumber('TPS');
+      const retreiveOperatorID = await retrieveNumber('OperatorID')
+  
+      const TPS = retreiveTPS ? JSON.parse(retreiveTPS) : null;
+      const OperatorID = retreiveOperatorID ? JSON.parse(retreiveOperatorID) : null;
 
       // insert data untuk yang menerima request
       const submit = await supabase

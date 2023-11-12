@@ -11,7 +11,6 @@ import tw from 'twrnc'
 
 import LinearGradient from 'react-native-linear-gradient'
 import UpdateProfileScreen from './screens/UpdateProfileScreen';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import * as Solid from 'react-native-heroicons/solid'
 import * as Outline from 'react-native-heroicons/outline'
@@ -40,6 +39,8 @@ import SplashScreen from './screens/SplashScreen';
 import SuccessScreen from './screens/SuccessScreen';
 import DetailDataScreen from './screens/DetailDataScreen';
 import ShowGalleryScreen from './screens/ShowGalleryScreen';
+import CourseScreen from './screens/CourseScreen';
+import UpdateCollectionScreen from './screens/UpdateCollectionScreen';
 
 const Stack = createNativeStackNavigator()
 const Tabs  = createBottomTabNavigator()
@@ -56,6 +57,14 @@ function HomeStack(): JSX.Element {
       initialRouteName='Home'
     >
       <Stack.Screen name='Home' component={HomeScreen} options={{ headerShown: false }} />
+    </Stack.Navigator>
+  )
+}
+
+function CourseStack(): JSX.Element {
+  return(
+    <Stack.Navigator>
+      <Stack.Screen name='Course' component={CourseScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   )
 }
@@ -88,19 +97,6 @@ function ProfileStack(): JSX.Element {
       <Stack.Screen name='Profile' component={ProfileScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   )
-}
-
-async function retrieveNumber(key: string) {
-  try {
-    const value = await AsyncStorage.getItem(key)
-    if (value !== null) {
-      return parseInt(value, 10)
-    }
-    return null
-  } catch (error) {
-    console.error(`Error retrieving ${key}: ${error}`)
-    return null
-  }
 }
 
 function BottomNav(): JSX.Element {
@@ -147,6 +143,34 @@ function BottomNav(): JSX.Element {
           })}
         />
         <Tabs.Screen
+          name='CourseStack'
+          component={CourseStack}
+          options={{
+            headerShown: false,
+            tabBarShowLabel: false,
+            tabBarIcon: ({focused}) => (
+              <View style={tw`w-full h-full items-center justify-center`}>
+                <View style={tw`w-20 rounded-xl py-4 items-center`}>
+                  {
+                    focused ?
+                    <Solid.AcademicCapIcon style={tw`text-green-600`} />
+                    :
+                    <Outline.AcademicCapIcon style={tw`text-[#bababa]`}/>
+                  }
+                  <Text style={tw`mt-1 text-xs ${focused ? "text-gray-900 font-bold" : "text-[#bababa]"} `}>Literasi</Text>
+                </View>
+              </View>
+            )
+          }} listeners={({navigation, route}) => ({
+            tabPress: e => {
+              Animated.spring(tabOffsetValue, {
+                toValue: getWidth(),
+                useNativeDriver: true
+              }).start()
+            }
+          })}
+        />
+        {/* <Tabs.Screen
           name='RequestStack'
           component={RequestStack}
           options={{
@@ -174,7 +198,7 @@ function BottomNav(): JSX.Element {
               }).start()
             }
           })}
-        />
+        /> */}
         <Tabs.Screen
           name='HistoryStack'
           component={HistoryStack}
@@ -278,6 +302,7 @@ function App(): JSX.Element {
               <Stack.Screen name='Affiliate' component={AffiliateScreen} options={{ headerShown: false, presentation: 'modal' }} />
               <Stack.Screen name='ManageAccount' component={ManageAccountScreen} options={{ gestureEnabled: true, headerShown: false, presentation: 'fullScreenModal' }} />
               <Stack.Screen name='UpdateProfile' component={UpdateProfileScreen} options={{ gestureEnabled: true, headerShown: false, presentation: 'fullScreenModal' }} />
+              <Stack.Screen name='UpdateCollection' component={UpdateCollectionScreen} options={{ gestureEnabled: true, headerShown: false, presentation: 'fullScreenModal' }} />
             </Stack.Navigator>
           </Provider>
         </AutocompleteDropdownContextProvider>
